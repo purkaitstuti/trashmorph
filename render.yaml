@@ -1,0 +1,30 @@
+# Render Blueprint: two services from one repo. Secrets are set in the Render dashboard (sync: false).
+services:
+  - type: web
+    name: trashmorph-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - { key: PYTHON_VERSION, value: 3.12.7 }
+      - { key: ENVIRONMENT, value: production }
+      - { key: SUPABASE_URL, sync: false }
+      - { key: SUPABASE_ANON_KEY, sync: false }
+      - { key: SUPABASE_SERVICE_ROLE_KEY, sync: false }
+      - { key: SUPABASE_JWT_SECRET, sync: false }   # only if your project still uses the legacy HS256 secret
+      - { key: CORS_ORIGINS, sync: false }          # e.g. https://trashmorph-web.onrender.com
+  - type: web
+    name: trashmorph-web
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    envVars:
+      - { key: NODE_VERSION, value: 20 }
+      - { key: VITE_SUPABASE_URL, sync: false }
+      - { key: VITE_SUPABASE_ANON_KEY, sync: false }
+      - { key: VITE_API_BASE_URL, sync: false }     # e.g. https://trashmorph-api.onrender.com
+    routes:
+      - { type: rewrite, source: /*, destination: /index.html }
