@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     supabase_jwt_secret: str = ""
     supabase_jwks_url: str = ""
     cors_origins: str = "http://localhost:5173"
+    model_path: str = ""
+    min_confidence: float = 0.6
+    max_upload_size_mb: int = 5
+    scans_per_minute: int = 10
 
     @property
     def origins(self) -> list[str]:

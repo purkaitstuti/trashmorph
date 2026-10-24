@@ -6,10 +6,12 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import type { z } from "zod";
+import { RequestCollectionForm } from "./collections";
 import { EmptyState, ListingCard, Pagination } from "../components/listing";
 import { ErrorNote, Field, FullPageSpinner, PageHeader, Select, Spinner } from "../components/ui";
 import { api } from "../lib/api";
 import { CATEGORIES, CONDITIONS, NEXT_ACTIONS, REPORT_REASONS, SORTS, STATUS_LABEL, TYPES, UNITS, categoryLabel, conditionLabel, priceLabel, timeAgo, type Listing, type ListingDetail, type Page } from "../lib/listings";
+import { getPosition, reverseGeocode } from "../lib/geo";
 import { listingSchema } from "../lib/schemas";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../providers/AuthProvider";
@@ -128,6 +130,7 @@ export function ListingDetailPage() {
                 <button className="btn-primary" disabled={inquire.isPending}>{inquire.isPending ? "Sending…" : "Send inquiry"}</button>
               </form>
             )}
+            <RequestCollectionForm listing={l} />
             <p className="text-sm text-muted">Meet in a public place and inspect items before accepting. No payments are processed here.</p>
             {!reporting ? <button className="text-sm font-semibold text-muted underline" onClick={() => setReporting(true)}>Report this listing</button> : (
               <form className="card space-y-3" onSubmit={(e) => { e.preventDefault(); report.mutate(); }}>
@@ -182,6 +185,7 @@ type FormValues = z.infer<typeof listingSchema>;
 
 export function ListingFormPage() {
   const { id } = useParams();
+  const [search] = useSearchParams();
   const editing = !!id;
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -192,7 +196,8 @@ export function ListingFormPage() {
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<FormValues>({ resolver: zodResolver(listingSchema), defaultValues: { listing_type: "free", unit: "items", category: "", condition: "" } });
+  const [locating, setLocating] = useState(false);
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<FormValues>({ resolver: zodResolver(listingSchema), defaultValues: { listing_type: "free", unit: "items", category: CATEGORIES.some(([k]) => k === search.get("category")) ? search.get("category")! : "", condition: "" } });
   const type = watch("listing_type");
 
   useEffect(() => {
@@ -213,12 +218,15 @@ export function ListingFormPage() {
     setFiles((f) => [...f, ...picked]);
   }
 
-  function useMyLocation() {
-    if (!navigator.geolocation) return void toast.error("Your browser can't share location.");
-    navigator.geolocation.getCurrentPosition(
-      (p) => { setCoords({ latitude: Number(p.coords.latitude.toFixed(4)), longitude: Number(p.coords.longitude.toFixed(4)) }); toast.success("Location added"); },
-      () => toast.error("Location permission was denied. You can still enter a place name."),
-    );
+  async function fillFromLocation() {
+    setLocating(true);
+    try {
+      const p = await getPosition();
+      setCoords({ latitude: p.lat, longitude: p.lng });
+      const label = await reverseGeocode(p.lat, p.lng);
+      if (label) { setValue("location_label", label, { shouldValidate: true, shouldDirty: true }); toast.success("Location added"); }
+      else toast("Coordinates saved, but we couldn't find a place name. Please type it in.");
+    } catch (e) { toast.error(errText(e)); } finally { setLocating(false); }
   }
 
   async function submit(v: FormValues, status: "draft" | "active") {
@@ -265,8 +273,8 @@ export function ListingFormPage() {
         </div>
         <Field label="Location" placeholder="City or neighbourhood" error={errors.location_label?.message} {...register("location_label")} />
         <div className="text-sm">
-          <button type="button" className="btn-outline" onClick={useMyLocation}><MapPin className="h-4 w-4" aria-hidden />Add my current location (optional)</button>
-          <p className="mt-1 text-muted">{coords ? `Approximate coordinates saved: ${coords.latitude}, ${coords.longitude}.` : "Only used to place your listing on the map. Your browser asks permission first."}{coords && <button type="button" className="ml-2 font-semibold underline" onClick={() => setCoords(null)}>Remove</button>}</p>
+          <button type="button" className="btn-outline" disabled={locating} onClick={fillFromLocation}><MapPin className="h-4 w-4" aria-hidden />{locating ? "Finding your location…" : "Use my current location"}</button>
+          <p className="mt-1 text-muted">{coords ? `Saved coordinates: ${coords.latitude}, ${coords.longitude}. The location box above was filled in for you; edit it if needed.` : "Fills in the location box and saves coordinates so the listing can appear on maps. Your browser asks permission first, and OpenStreetMap is used to look up the place name."}{coords && <button type="button" className="ml-2 font-semibold underline" onClick={() => setCoords(null)}>Remove</button>}</p>
         </div>
         <div>
           <p className="mb-1 text-sm font-semibold">Photos (up to 5)</p>

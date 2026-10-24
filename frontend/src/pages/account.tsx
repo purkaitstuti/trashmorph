@@ -138,6 +138,11 @@ export function SettingsPage() {
           <button className="btn-outline mt-3" onClick={async () => { await signOut(); navigate("/", { replace: true }); }}>Sign out</button>
         </section>
 
+        <section className="card" aria-labelledby="a11y">
+          <h2 id="a11y" className="font-semibold">Accessibility</h2>
+          <p className="mt-2 text-sm text-muted">Every control works with the keyboard and shows a visible focus ring. Animations are minimised automatically if your device is set to reduce motion, and text and colours are checked for contrast in both light and dark themes. Use your browser's zoom or your device's text size to enlarge text.</p>
+        </section>
+
         <section className="card border-danger/50" aria-labelledby="danger">
           <h2 id="danger" className="font-semibold text-danger">Delete account</h2>
           <p className="mt-2 text-sm text-muted">This permanently deletes your account, profile, settings and uploaded photo. It can't be undone.</p>

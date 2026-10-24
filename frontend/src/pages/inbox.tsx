@@ -29,7 +29,7 @@ export function NotificationsPage() {
       <ul className="space-y-3">
         {q.data?.items.map((n) => (
           <li key={n.id}>
-            <button className={`card flex w-full items-start gap-3 text-left ${n.read_at ? "" : "border-primary"}`} onClick={() => { if (!n.read_at) readOne.mutate(n.id); if (n.notification_type === "inquiry") navigate("/inquiries"); }}>
+            <button className={`card flex w-full items-start gap-3 text-left ${n.read_at ? "" : "border-primary"}`} onClick={() => { if (!n.read_at) readOne.mutate(n.id); if (n.notification_type === "inquiry") navigate("/inquiries"); else if (n.notification_type === "collection" && n.reference_id) navigate(`/collections/${n.reference_id}`); }}>
               <Bell className={`mt-1 h-5 w-5 shrink-0 ${n.read_at ? "text-muted" : "text-primary"}`} aria-hidden />
               <span><span className="block font-semibold">{n.title}{!n.read_at && <span className="sr-only"> (unread)</span>}</span><span className="block text-muted">{n.message}</span><span className="block text-xs text-muted">{timeAgo(n.created_at)}</span></span>
             </button>

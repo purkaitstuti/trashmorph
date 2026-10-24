@@ -29,3 +29,23 @@ export const listingSchema = z.object({
 }).superRefine((v, ctx) => {
   if (v.listing_type === "price" && (!v.price || !(Number(v.price) >= 0))) ctx.addIssue({ code: "custom", path: ["price"], message: "Enter a price" });
 });
+
+const todayOrLater = (v: string) => {
+  if (!v) return false;
+  const d = new Date(`${v}T00:00:00`);
+  const t = new Date(); t.setHours(0, 0, 0, 0);
+  return d >= t;
+};
+export const collectionSchema = z.object({
+  quantity: z.string().refine((v) => Number(v) > 0 && Number(v) <= 1_000_000, "Enter a quantity above 0"),
+  requested_date: z.string().refine(todayOrLater, "Choose today or a later date"),
+  time_window: z.enum(["any", "morning", "afternoon", "evening"]),
+  instructions: z.string().trim().max(500).optional(),
+});
+export const recyclerSchema = z.object({
+  name: z.string().trim().min(2, "Enter a name").max(120),
+  recycler_type: z.string().min(1, "Choose a type"),
+  description: z.string().trim().max(1000).optional(),
+  address: z.string().trim().max(200).optional(),
+  contact_information: z.string().trim().max(200).optional(),
+});

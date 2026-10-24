@@ -30,3 +30,22 @@ export async function api<T>(path: string, init: { method?: string; body?: unkno
 
 export type Profile = { id: string; email: string | null; full_name: string | null; avatar_url: string | null; preferred_location: string | null; role: string; created_at: string | null };
 export type Settings = { theme: "light" | "dark" | "system"; notification_preferences: { in_app: boolean; email: boolean } };
+
+/** Multipart upload with progress (fetch can't report upload progress). */
+export async function uploadForm<T>(path: string, form: FormData, onProgress?: (pct: number) => void): Promise<T> {
+  const { data } = await supabase.auth.getSession();
+  return new Promise<T>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${BASE}${path}`);
+    if (data.session) xhr.setRequestHeader("Authorization", `Bearer ${data.session.access_token}`);
+    xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress?.(Math.round((e.loaded / e.total) * 100)); };
+    xhr.onerror = () => reject(new ApiError(0, "Can't reach the server. Check your connection and try again."));
+    xhr.onload = () => {
+      let json: { detail?: unknown } | null = null;
+      try { json = JSON.parse(xhr.responseText); } catch { /* not JSON */ }
+      if (xhr.status >= 200 && xhr.status < 300) return resolve(json as T);
+      reject(new ApiError(xhr.status, typeof json?.detail === "string" ? json.detail : "Something went wrong. Please try again."));
+    };
+    xhr.send(form);
+  });
+}

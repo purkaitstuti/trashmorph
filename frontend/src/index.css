@@ -30,3 +30,9 @@
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
+
+/* Map: keep Leaflet below the sticky header and make tiles and popups readable in dark mode. */
+.leaflet-container { font: inherit; }
+.dark .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9); }
+.dark .leaflet-popup-content-wrapper, .dark .leaflet-popup-tip { background: rgb(var(--surface)); color: rgb(var(--text)); }
+.leaflet-popup-content a { color: rgb(var(--primary)); text-decoration: underline; }

@@ -11,12 +11,12 @@ import { contactSchema } from "../lib/schemas";
 import { useAuth } from "../providers/AuthProvider";
 
 const features = [
-  { icon: ScanLine, title: "AI waste scanner", text: "Photograph an item and get a suggested category and disposal guidance.", live: false },
-  { icon: MapPin, title: "Recycler discovery", text: "Find recycling and reuse options on a map, filtered by material.", live: false },
-  { icon: ShoppingBag, title: "Reuse marketplace", text: "List items you no longer need and find reusable materials from others.", live: false },
-  { icon: Truck, title: "Collection tracking", text: "Coordinate pickups and follow each request from start to finish.", live: false },
-  { icon: Leaf, title: "GreenScore", text: "Earn points for recorded recycling and reuse activity.", live: false },
-  { icon: BarChart3, title: "Impact analytics", text: "See your activity over time, built only from your own records.", live: false },
+  { icon: ScanLine, title: "AI waste scanner", text: "Photograph an item and get a suggested category and disposal guidance.", live: true, badge: "Works once a model is configured" },
+  { icon: MapPin, title: "Recycler discovery", text: "Find recycling and reuse options on a map, filtered by material.", live: true },
+  { icon: ShoppingBag, title: "Reuse marketplace", text: "List items you no longer need and find reusable materials from others.", live: true },
+  { icon: Truck, title: "Collection tracking", text: "Coordinate pickups and follow each request from start to finish.", live: true },
+  { icon: Leaf, title: "GreenScore", text: "Earn points for recorded recycling and reuse activity.", live: true },
+  { icon: BarChart3, title: "Impact analytics", text: "See your activity over time, built only from your own records.", live: true },
 ];
 
 const journey = ["Plastic bottle", "Sorted and washed", "Shredded into flakes", "Spun into fibre", "Fleece jacket"];
@@ -48,15 +48,15 @@ export function HomePage() {
       </section>
 
       <section id="features" className="scroll-mt-24 py-14">
-        <h2 className="text-3xl font-bold">What TRASHMORPH is building</h2>
-        <p className="mt-2 max-w-2xl text-muted">Everything below is under development. Features are marked as they become available.</p>
+        <h2 className="text-3xl font-bold">What you can do</h2>
+        <p className="mt-2 max-w-2xl text-muted">Some features depend on how the site is set up. Where that applies, the card says so.</p>
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map(({ icon: Icon, title, text, live }) => (
+          {features.map(({ icon: Icon, title, text, live, badge }: { icon: typeof ScanLine; title: string; text: string; live: boolean; badge?: string }) => (
             <article key={title} className="card">
               <Icon className="h-6 w-6 text-primary" aria-hidden />
               <h3 className="mt-3 text-lg font-semibold">{title}</h3>
               <p className="mt-1 text-muted">{text}</p>
-              {!live && <span className="badge mt-3">Coming soon</span>}
+              {(!live || badge) && <span className="badge mt-3">{badge ?? "Coming soon"}</span>}
             </article>
           ))}
         </div>
@@ -177,7 +177,7 @@ export function PrivacyPage() {
         ["What we collect", "Your email address, name and password (handled by our authentication provider, Supabase; we never see or store your password). If you add them, a profile photo and a preferred location. Messages you send through the contact form."],
         ["How we use it", "To run your account, show your profile, and respond to your messages. We don't sell your data."],
         ["Photos", "Your profile photo is stored in a public bucket so it can be displayed. Don't upload anything you don't want to be publicly viewable."],
-        ["Location", "We don't read your device location. Your preferred location is text you type and can change or remove at any time."],
+        ["Location", "We only read your device location when you press a location button, and only after your browser asks permission. To turn coordinates into a place name or to search for a place, your coordinates or search text are sent to OpenStreetMap's Nominatim service. Coordinates you choose to save on a listing or recycler suggestion are stored with it. A preferred location in your profile is text you type and can change or remove at any time."],
         ["Where data is stored", "In Supabase (database, authentication and file storage). Access to your records is restricted to your account by database security rules."],
         ["Deleting your data", "Delete your account in Settings to permanently remove your account, profile, settings and uploaded photo. Contact messages are kept so we can respond and may be removed on request."],
         ["Changes", "We'll update this page if our practices change as new features are added."],

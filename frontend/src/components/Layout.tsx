@@ -8,8 +8,10 @@ import { isSupabaseConfigured } from "../lib/supabase";
 import { useAuth } from "../providers/AuthProvider";
 import { ThemeToggle } from "./ThemeToggle";
 
-const publicLinks = [["/", "Home"], ["/marketplace", "Marketplace"], ["/recycling-guide", "Recycling guide"], ["/about", "About"], ["/contact", "Contact"]] as const;
-const authLinks = [["/dashboard", "Dashboard"], ["/marketplace", "Marketplace"], ["/my-listings", "My listings"], ["/saved", "Saved"], ["/inquiries", "Inquiries"], ["/profile", "Profile"], ["/settings", "Settings"]] as const;
+type L = readonly (readonly [string, string])[];
+const publicLinks: L = [["/", "Home"], ["/marketplace", "Marketplace"], ["/recyclers", "Recyclers"], ["/recycling-guide", "Recycling guide"], ["/about", "About"], ["/contact", "Contact"]];
+const mainLinks: L = [["/dashboard", "Dashboard"], ["/scanner", "Scanner"], ["/marketplace", "Marketplace"], ["/recyclers", "Recyclers"], ["/collections", "Collections"], ["/my-listings", "My listings"]];
+const accountLinks: L = [["/greenscore", "GreenScore"], ["/analytics", "Analytics"], ["/saved", "Saved"], ["/inquiries", "Inquiries"], ["/recycling-guide", "Recycling guide"], ["/profile", "Profile"], ["/settings", "Settings"]];
 
 function Logo() {
   return <Link to="/" className="flex items-center gap-2 font-display text-lg font-bold"><Recycle className="h-6 w-6 text-primary" aria-hidden />TRASHMORPH</Link>;
@@ -22,9 +24,10 @@ export function Layout() {
   const navigate = useNavigate();
   useEffect(() => setOpen(false), [pathname]);
 
-  const links: readonly (readonly [string, string])[] = user ? authLinks : publicLinks;
   const unread = useQuery({ queryKey: ["unread", user?.id], queryFn: () => api<{ count: number }>("/api/v1/notifications/unread-count"), enabled: !!user, refetchInterval: 60_000 });
   const n = unread.data?.count ?? 0;
+  const desktop = user ? mainLinks : publicLinks;
+  const mobile = user ? [...mainLinks, ...accountLinks] : publicLinks;
   const cls = ({ isActive }: { isActive: boolean }) => `rounded-md px-3 py-2 text-sm font-semibold ${isActive ? "bg-subtle text-ink" : "text-muted hover:text-ink"}`;
 
   async function logout() {
@@ -35,10 +38,10 @@ export function Layout() {
     <div className="flex min-h-screen flex-col">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded focus:bg-surface focus:p-2">Skip to content</a>
       <header className="sticky top-0 z-40 border-b border-line bg-bg/95 backdrop-blur" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
-        <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4" aria-label="Main">
+        <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-2 px-4" aria-label="Main">
           <Logo />
           <div className="hidden items-center gap-1 xl:flex">
-            {links.map(([to, label]) => <NavLink key={to} to={to} end={to === "/"} className={cls}>{label}</NavLink>)}
+            {desktop.map(([to, label]) => <NavLink key={to} to={to} end={to === "/"} className={cls}>{label}</NavLink>)}
           </div>
           <div className="flex items-center gap-2">
             {user && (
@@ -49,7 +52,15 @@ export function Layout() {
             )}
             <ThemeToggle />
             <div className="hidden items-center gap-2 xl:flex">
-              {user ? <button className="btn-outline" onClick={logout}>Sign out</button> : <><Link to="/login" className="btn-outline">Sign in</Link><Link to="/register" className="btn-primary">Get started</Link></>}
+              {user ? (
+                <details key={pathname} className="relative">
+                  <summary className="btn-outline cursor-pointer list-none">Account</summary>
+                  <div className="absolute right-0 z-50 mt-2 w-48 rounded-lg border border-line bg-surface p-1 shadow-lg">
+                    {accountLinks.map(([to, label]) => <Link key={to} to={to} className="block rounded-md px-3 py-2 text-sm hover:bg-subtle">{label}</Link>)}
+                    <button className="block w-full rounded-md px-3 py-2 text-left text-sm hover:bg-subtle" onClick={logout}>Sign out</button>
+                  </div>
+                </details>
+              ) : <><Link to="/login" className="btn-outline">Sign in</Link><Link to="/register" className="btn-primary">Get started</Link></>}
             </div>
             <button type="button" className="btn-outline h-11 w-11 !p-0 xl:hidden" aria-expanded={open} aria-controls="mobile-menu" aria-label={open ? "Close menu" : "Open menu"} onClick={() => setOpen((o) => !o)}>
               {open ? <X className="h-5 w-5" aria-hidden /> : <Menu className="h-5 w-5" aria-hidden />}
@@ -59,7 +70,7 @@ export function Layout() {
         {open && (
           <div id="mobile-menu" className="max-h-[calc(100vh-4rem)] overflow-y-auto border-t border-line px-4 py-3 xl:hidden">
             <div className="flex flex-col gap-1">
-              {links.map(([to, label]) => <NavLink key={to} to={to} end={to === "/"} className={cls}>{label}</NavLink>)}
+              {mobile.map(([to, label]) => <NavLink key={to} to={to} end={to === "/"} className={cls}>{label}</NavLink>)}
               {user ? <button className="btn-outline mt-2" onClick={logout}>Sign out</button> : <><Link to="/login" className="btn-outline mt-2">Sign in</Link><Link to="/register" className="btn-primary">Get started</Link></>}
             </div>
           </div>

@@ -15,6 +15,12 @@ services:
       - { key: SUPABASE_SERVICE_ROLE_KEY, sync: false }
       - { key: SUPABASE_JWT_SECRET, sync: false }   # only if your project still uses the legacy HS256 secret
       - { key: CORS_ORIGINS, sync: false }          # e.g. https://trashmorph-web.onrender.com
+      # Optional AI scanner. Without these the scanner honestly reports "not configured". See DEPLOY.md before enabling:
+      #   buildCommand: pip install -r requirements.txt -r requirements-ml.txt && python scripts/fetch_model.py
+      #   and a plan with >= 2 GB RAM.
+      # - { key: MODEL_PATH, value: /opt/render/project/src/backend/model }
+      # - { key: MODEL_URL, sync: false }
+      # - { key: MODEL_SHA256, sync: false }
   - type: web
     name: trashmorph-web
     runtime: static

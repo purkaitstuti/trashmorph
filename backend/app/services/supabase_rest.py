@@ -67,7 +67,7 @@ async def service_insert(table: str, row: dict) -> None:
         raise _fail(r.status_code)
 
 
-STORAGE_BUCKETS = ("avatars", "listing-images")
+STORAGE_BUCKETS = ("avatars", "listing-images", "scan-images")
 
 
 async def delete_user_and_files(user_id: str) -> None:
@@ -87,3 +87,36 @@ async def delete_user_and_files(user_id: str) -> None:
         r = await client.delete(f"{s.supabase_url}/auth/v1/admin/users/{user_id}", headers=headers)
         if r.status_code >= 400:
             raise _fail(r.status_code)
+
+
+# ── Storage as the signed-in user (Storage RLS limits each user to their own folder) ──
+def _user_headers(token: str) -> dict:
+    return {"apikey": get_settings().supabase_anon_key, "Authorization": f"Bearer {token}"}
+
+
+async def storage_upload(token: str, bucket: str, path: str, data: bytes, content_type: str) -> None:
+    s = get_settings()
+    async with httpx.AsyncClient(timeout=20) as client:
+        r = await client.post(f"{s.supabase_url}/storage/v1/object/{bucket}/{path}", content=data, headers={**_user_headers(token), "Content-Type": content_type})
+    if r.status_code >= 400:
+        raise _fail(r.status_code)
+
+
+async def storage_sign(token: str, bucket: str, paths: list[str], expires: int = 3600) -> dict[str, str]:
+    """Return {path: signed_url} for private files the user owns."""
+    if not paths:
+        return {}
+    s = get_settings()
+    async with httpx.AsyncClient(timeout=15) as client:
+        r = await client.post(f"{s.supabase_url}/storage/v1/object/sign/{bucket}", json={"expiresIn": expires, "paths": paths}, headers=_user_headers(token))
+    if r.status_code >= 400:
+        raise _fail(r.status_code)
+    return {o["path"]: f"{s.supabase_url}/storage/v1{o['signedURL']}" for o in r.json() if o.get("signedURL")}
+
+
+async def storage_remove(token: str, bucket: str, paths: list[str]) -> None:
+    s = get_settings()
+    async with httpx.AsyncClient(timeout=15) as client:
+        r = await client.request("DELETE", f"{s.supabase_url}/storage/v1/object/{bucket}", json={"prefixes": paths}, headers=_user_headers(token))
+    if r.status_code >= 400:
+        raise _fail(r.status_code)
