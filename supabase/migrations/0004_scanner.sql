@@ -30,3 +30,6 @@ create policy "scan_images_insert_own" on storage.objects for insert to authenti
   with check (bucket_id = 'scan-images' and (storage.foldername(name))[1] = auth.uid()::text);
 create policy "scan_images_delete_own" on storage.objects for delete to authenticated
   using (bucket_id = 'scan-images' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- Make the new table visible to PostgREST immediately after applying this migration.
+notify pgrst, 'reload schema';

@@ -44,7 +44,6 @@ export function DashboardPage() {
         {s.data && s.data.recent_listings.length === 0 && <p className="mt-2 text-muted">You haven't created a listing yet. <Link to="/my-listings/new" className="font-semibold text-primary underline">Create your first one</Link>.</p>}
         <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{s.data?.recent_listings.map((l) => <ListingCard key={l.id} l={l} showStatus />)}</div>
       </section>
-      <p className="mt-8 text-sm text-muted">Nothing on this page is sample data.</p>
     </>
   );
 }

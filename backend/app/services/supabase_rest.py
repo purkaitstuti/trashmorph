@@ -31,6 +31,23 @@ async def _call(method: str, table: str, token: str | None, params: Params, json
     async with httpx.AsyncClient(timeout=10) as client:
         r = await client.request(method, f"{s.supabase_url}/rest/v1/{table}", params=params, json=json, headers=headers)
     if r.status_code >= 400:
+        # Include PostgREST's error code in server logs so schema-cache failures
+        # can be distinguished from genuinely missing tables without leaking details
+        # to API clients.
+        error_code = None
+        try:
+            error_code = r.json().get("code")
+        except (ValueError, AttributeError):
+            pass
+        log.warning("supabase request failed status=%s code=%s", r.status_code, error_code)
+        # PGRST205 specifically means the table is absent from PostgREST's schema
+        # cache (commonly because the migration was applied to another project or
+        # the cache has not reloaded yet). Preserve other 404s as ordinary not found.
+        if table == "waste_scans" and r.status_code == 404 and error_code == "PGRST205":
+            raise HTTPException(
+                503,
+                "Supabase's API has not picked up the waste_scans table yet. Confirm migration 0004 was run in the configured project, then run NOTIFY pgrst, 'reload schema' in its SQL Editor.",
+            )
         raise _fail(r.status_code)
     return r
 

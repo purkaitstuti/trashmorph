@@ -1,0 +1,1 @@
+{"labels":["battery","biological","cardboard","glass","metal","paper","plastic","trash"],"input_size":224,"preprocess":"rescale_0_1","version":"wastewise-yolov8n-cls-onnx-v1"}

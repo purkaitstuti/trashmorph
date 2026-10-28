@@ -56,7 +56,8 @@ async def analytics(
     if (end - start).days > 730:
         raise HTTPException(422, "Choose a range of two years or less")
     me = f"eq.{user.id}"
-    window = [("created_at", f"gte.{start.isoformat()}T00:00:00Z"), ("created_at", f"lte.{end.isoformat()}T23:59:59Z")]
+    # A half-open UTC interval includes fractional-second events on the end date.
+    window = [("created_at", f"gte.{start.isoformat()}T00:00:00Z"), ("created_at", f"lt.{(end + timedelta(days=1)).isoformat()}T00:00:00Z")]
     cat = [("category", f"eq.{category}")] if category else []
 
     def q(table: str, select: str, *extra: tuple[str, str]):

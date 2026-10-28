@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 
 import jwt
+import httpx
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt import PyJWKClient
@@ -40,7 +41,22 @@ def decode_token(token: str, settings: Settings) -> dict:
     raise jwt.InvalidTokenError("unsupported algorithm")
 
 
-def get_current_user(
+async def _verify_with_supabase(token: str, settings: Settings) -> dict:
+    """Validate a token with Supabase Auth if local ES256 crypto is unavailable."""
+    async with httpx.AsyncClient(timeout=8) as client:
+        response = await client.get(
+            f"{settings.supabase_url.rstrip('/')}/auth/v1/user",
+            headers={"apikey": settings.supabase_anon_key, "Authorization": f"Bearer {token}"},
+        )
+    if response.status_code != 200:
+        raise jwt.InvalidTokenError("Supabase rejected the access token")
+    user = response.json()
+    if not isinstance(user, dict) or not isinstance(user.get("id"), str):
+        raise jwt.InvalidTokenError("Supabase returned no user identity")
+    return {"sub": user["id"], "email": user.get("email")}
+
+
+async def get_current_user(
     creds: HTTPAuthorizationCredentials | None = Depends(bearer),
     settings: Settings = Depends(get_settings),
 ) -> CurrentUser:
@@ -50,16 +66,24 @@ def get_current_user(
     try:
         claims = decode_token(creds.credentials, settings)
     except (jwt.PyJWTError, jwt.exceptions.PyJWKClientError) as exc:
-        log.info("token rejected: %s", type(exc).__name__)
+        if type(exc).__name__ == "MissingCryptographyError":
+            try:
+                claims = await _verify_with_supabase(creds.credentials, settings)
+            except (httpx.HTTPError, jwt.PyJWTError, ValueError) as verify_exc:
+                log.warning("Supabase token verification failed: %s (%s)", type(verify_exc).__name__, str(verify_exc)[:180])
+                raise unauthorized from None
+            return CurrentUser(id=claims["sub"], email=claims.get("email"), token=creds.credentials)
+        # Keep useful local diagnostics while never logging the bearer token.
+        log.info("token rejected: %s (%s)", type(exc).__name__, str(exc)[:180])
         raise unauthorized from None
     return CurrentUser(id=claims["sub"], email=claims.get("email"), token=creds.credentials)
 
 
-def get_optional_user(
+async def get_optional_user(
     creds: HTTPAuthorizationCredentials | None = Depends(bearer),
     settings: Settings = Depends(get_settings),
 ) -> CurrentUser | None:
     """For public endpoints: anonymous is fine, but a supplied token must be valid."""
     if creds is None:
         return None
-    return get_current_user(creds, settings)
+    return await get_current_user(creds, settings)
