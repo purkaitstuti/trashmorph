@@ -95,3 +95,17 @@ def test_organization_directory_includes_review_status(monkeypatch):
     response = client.get("/api/v1/food-rescue/organizations")
     assert response.status_code == 200
     assert response.json()["items"][0]["verification_status"] == "needs_review"
+
+
+def test_organization_directory_returns_nearest_five(monkeypatch):
+    rows = [{"id": f"org-{n}", "name": f"Group {n}", "organization_type": "ngo", "address": "Kolkata", "latitude": n / 100, "longitude": 0,
+             "contact_number": None, "website": None, "operating_hours": None, "donation_requirements": None, "verification_status": "verified"} for n in range(1, 8)]
+
+    async def rest_list(table, token, **kwargs):
+        return rows, len(rows)
+
+    monkeypatch.setattr(supabase_rest, "rest_list", rest_list)
+    response = client.get("/api/v1/food-rescue/organizations?lat=0&lng=0&radius_km=20000&limit=5")
+    assert response.status_code == 200
+    assert response.json()["total"] == 7
+    assert [item["id"] for item in response.json()["items"]] == [f"org-{n}" for n in range(1, 6)]

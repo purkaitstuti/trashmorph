@@ -23,6 +23,49 @@ const RADII: [string, string][] = [["5", "5 km"], ["10", "10 km"], ["25", "25 km
 const dt = (d: Date) => { const z = new Date(d.getTime() - d.getTimezoneOffset() * 60000); return z.toISOString().slice(0, 16); };
 const futureDefault = () => { const d = new Date(); d.setHours(d.getHours() + 4); return dt(d); };
 
+function ExpiryTimer({ deadline, status }: { deadline: string; status: string }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (status !== "available") return;
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [status]);
+  if (status !== "available") return null;
+  const remaining = new Date(deadline).getTime() - now;
+  if (remaining <= 0) return <div className="bg-danger/10 px-5 py-3 text-sm font-semibold text-danger" role="timer" aria-live="off">Pickup deadline passed</div>;
+  const seconds = Math.floor(remaining / 1000);
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  const label = days ? `${days}d ${hours}h ${minutes}m ${secs}s` : hours ? `${hours}h ${minutes}m ${secs}s` : `${minutes}m ${secs}s`;
+  const urgent = remaining < 60 * 60 * 1000;
+  return <div className={`flex items-center justify-between px-5 py-3 text-sm font-semibold ${urgent ? "bg-danger/10 text-danger" : "bg-subtle text-ink"}`} role="timer" aria-label={`Expires in ${label}`} aria-live="off">
+    <span>{urgent ? "Expiring soon" : "Time until pickup deadline"}</span><span className="font-mono tabular-nums">{label}</span>
+  </div>;
+}
+
+function NearestOrganizations({ donation }: { donation: FoodDonation }) {
+  const q = useQuery({
+    queryKey: ["food-nearest-organizations", donation.latitude, donation.longitude],
+    queryFn: () => api<{ items: FoodOrganization[]; total: number }>(`/api/v1/food-rescue/organizations?lat=${donation.latitude}&lng=${donation.longitude}&radius_km=20000&limit=5`),
+    enabled: donation.status === "available",
+  });
+  return <section className="mt-4 border-t border-line pt-4" aria-label="Nearest food rescue organizations">
+    <h4 className="font-semibold">Closest listed organizations</h4>
+    <p className="mt-1 text-xs text-muted">Distances are estimates from the approximate pickup area. Contact each organization to confirm it can accept this food and arrange collection.</p>
+    {q.isLoading && <p className="mt-2 text-sm text-muted">Finding nearby organizations…</p>}
+    {q.isError && <p className="mt-2 text-sm text-danger">Nearby organizations couldn't be loaded.</p>}
+    {q.data?.items.length === 0 && <p className="mt-2 text-sm text-muted">No organizations are currently listed in the directory.</p>}
+    {!!q.data?.items.length && <ol className="mt-3 space-y-3">{q.data.items.map((org, i) => <li key={org.id} className="rounded-lg border border-line bg-bg p-3">
+      <div className="flex flex-wrap items-start justify-between gap-2"><div><p className="font-semibold">{i + 1}. {org.name}</p><p className="text-xs text-muted">{ORG_TYPES[org.organization_type] ?? org.organization_type} · {org.address}</p></div><span className="badge">{org.distance_km} km</span></div>
+      {org.verification_status === "needs_review" && <p className="mt-2 text-xs font-semibold text-amber-800 dark:text-amber-300">Needs review — verify the organization details independently.</p>}
+      <div className="mt-2 space-y-1 text-sm">{org.contact_number && <p>Phone: <a className="underline" href={`tel:${org.contact_number}`}>{org.contact_number}</a></p>}{org.website && <p><a className="inline-flex items-center gap-1 underline" href={org.website} target="_blank" rel="noopener noreferrer">Website<ExternalLink className="h-3 w-3" aria-hidden /></a></p>}{org.operating_hours && <p className="text-muted">Hours: {org.operating_hours}</p>}{org.donation_requirements && <p><strong>Requirements:</strong> {org.donation_requirements}</p>}</div>
+      <a href={foodDirectionsUrl(org)} target="_blank" rel="noopener noreferrer" className="btn-outline mt-2">Directions<ExternalLink className="h-4 w-4" aria-hidden /></a>
+    </li>)}</ol>}
+  </section>;
+}
+
 function OrganizationCard({ org }: { org: FoodOrganization }) {
   return <article className="card">
     <div className="flex flex-wrap items-start justify-between gap-2"><h3 className="text-lg font-semibold">{org.name}</h3><div className="flex flex-wrap gap-2">{org.distance_km != null && <span className="badge">{org.distance_km} km away</span>}<span className={`badge ${org.verification_status === "needs_review" ? "border border-amber-500/50 text-amber-800 dark:text-amber-300" : ""}`}>{org.verification_status === "needs_review" ? "Needs review" : "Details reviewed"}</span></div></div>
@@ -52,12 +95,14 @@ function DonationCard({ donation, mine = false, onChanged }: { donation: FoodDon
   const mark = useMutation({ mutationFn: (status: "donated" | "cancelled") => api(`/api/v1/food-rescue/donations/${donation.id}/outcome`, { method: "POST", body: { status, ...(status === "donated" ? { organization_id: orgId || undefined, reported_quantity: Number(qty), donated_at: donatedDate } : {}) } }), onSuccess: () => { toast.success("Donation record updated."); void qc.invalidateQueries({ queryKey: ["food-donations"] }); void qc.invalidateQueries({ queryKey: ["food-dashboard"] }); onChanged?.(); }, onError: (e) => toast.error(errorText(e)) });
   const remove = useMutation({ mutationFn: () => api(`/api/v1/food-rescue/donations/${donation.id}`, { method: "DELETE" }), onSuccess: () => { toast.success("Listing removed."); void qc.invalidateQueries({ queryKey: ["food-donations"] }); onChanged?.(); }, onError: (e) => toast.error(errorText(e)) });
   return <article className="card overflow-hidden !p-0">
+    <ExpiryTimer deadline={donation.pickup_deadline} status={donation.status} />
     {donation.photo_url && <img src={donation.photo_url} alt="" loading="lazy" className="h-40 w-full object-cover" />}
     <div className="p-5"><div className="flex flex-wrap items-start justify-between gap-2"><h3 className="text-lg font-semibold">{donation.title}</h3><span className="badge">{FOOD_STATUS[donation.status] ?? donation.status}</span></div>
       <p className="mt-1 text-sm text-muted">{foodCategoryLabel(donation.food_category)} · {donation.quantity} {donation.unit}</p>
       <p className="mt-1 text-sm text-muted">Pickup: {donation.location_label} · by {new Date(donation.pickup_deadline).toLocaleString()}</p>
       {donation.description && <p className="mt-3 text-sm">{donation.description}</p>}
       <div className="mt-3 space-y-1 text-sm"><p><strong>Prepared:</strong> {new Date(donation.prepared_at).toLocaleString()}</p><p><strong>Storage:</strong> {donation.storage_conditions}</p><p><strong>Allergens:</strong> {donation.allergens.length ? donation.allergens.join(", ") : "None listed"}</p></div>
+      {donation.status === "available" && <NearestOrganizations donation={donation} />}
       {donation.status === "donated" && <p className="mt-3 rounded-lg bg-subtle p-3 text-sm">Donor-reported handover: {donation.reported_quantity} {donation.unit} on {donation.donated_at}. This outcome has not been independently verified.</p>}
       {mine && donation.status === "available" && new Date(donation.pickup_deadline) > new Date() && <div className="mt-4 space-y-3 border-t border-line pt-4">
         {!outcome ? <div className="flex flex-wrap gap-2"><Link to={`/food-rescue/${donation.id}/edit`} className="btn-outline">Edit listing</Link><button className="btn-primary" onClick={() => setOutcome(true)}>Record outcome</button></div> : <div className="space-y-3 rounded-lg bg-subtle p-3">

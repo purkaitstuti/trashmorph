@@ -32,7 +32,7 @@ def haversine_km(a, b, c, d):
 
 
 @router.get("/organizations", response_model=OrganizationList)
-async def organizations(lat: float | None = Query(default=None, ge=-90, le=90), lng: float | None = Query(default=None, ge=-180, le=180), radius_km: float = Query(default=50, gt=0, le=500), q: str | None = Query(default=None, max_length=100), organization_type: str | None = Query(default=None, pattern="^(food_bank|community_kitchen|shelter|ngo|other)$")):
+async def organizations(lat: float | None = Query(default=None, ge=-90, le=90), lng: float | None = Query(default=None, ge=-180, le=180), radius_km: float = Query(default=50, gt=0, le=20000), limit: int = Query(default=MAX_RESULTS, ge=1, le=MAX_RESULTS), q: str | None = Query(default=None, max_length=100), organization_type: str | None = Query(default=None, pattern="^(food_bank|community_kitchen|shelter|ngo|other)$")):
     rows, _ = await db.rest_list("food_rescue_organizations", None, params=[("select", ORG_COLS), ("order", "name.asc"), ("limit", "1000")])
     found = []
     for r in rows:
@@ -46,7 +46,7 @@ async def organizations(lat: float | None = Query(default=None, ge=-90, le=90), 
         found.append({**r, "distance_km": dist})
     if lat is not None and lng is not None:
         found.sort(key=lambda r: r["distance_km"])
-    return {"items": found[:MAX_RESULTS], "total": len(found)}
+    return {"items": found[:limit], "total": len(found)}
 
 
 @router.get("/donations", response_model=Page[dict])
