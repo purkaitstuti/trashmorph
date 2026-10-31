@@ -37,6 +37,7 @@ export function DashboardPage() {
           <Link to="/recycling-guide" className="btn-outline"><BookOpen className="h-4 w-4" aria-hidden />Recycling guide</Link>
           <Link to="/scanner" className="btn-outline"><ScanLine className="h-4 w-4" aria-hidden />Scan waste</Link>
           <Link to="/analytics" className="btn-outline"><BarChart3 className="h-4 w-4" aria-hidden />Analytics</Link>
+          <Link to="/waste-pickup" className="btn-outline"><Leaf className="h-4 w-4" aria-hidden />Waste Pickup</Link>
         </div>
       </section>
       <section aria-label="Recent listings" className="mt-6">
