@@ -7,7 +7,7 @@ type Ctx = {
   session: Session | null;
   loading: boolean;
   signInWithPassword: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, fullName: string) => Promise<"verify" | "signed-in">;
+  signUp: (email: string, password: string, details: { fullName: string; accountType: "user" | "recycler"; recyclerOrganization?: string; recyclerLocation?: string; recyclerContact?: string }) => Promise<"verify" | "signed-in">;
   signInWithGoogle: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updatePassword: (password: string) => Promise<void>;
@@ -36,8 +36,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
     },
-    async signUp(email, password, fullName) {
-      const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: fullName }, emailRedirectTo: callback() } });
+    async signUp(email, password, details) {
+      const { data, error } = await supabase.auth.signUp({ email, password, options: { data: {
+        full_name: details.fullName, account_type: details.accountType,
+        recycler_organization: details.accountType === "recycler" ? details.recyclerOrganization : null,
+        recycler_location: details.accountType === "recycler" ? details.recyclerLocation : null,
+        recycler_contact: details.accountType === "recycler" ? details.recyclerContact : null,
+      }, emailRedirectTo: callback() } });
       if (error) throw error;
       // With email confirmation on, Supabase returns an obfuscated user with no identities for an existing address.
       if (data.user && data.user.identities?.length === 0) throw new Error("An account with this email already exists. Try signing in.");

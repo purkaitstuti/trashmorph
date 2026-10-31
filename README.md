@@ -1,4 +1,4 @@
-# TRASHMORPH — Stages 1 to 7
+# TRASHMORPH — Stages 1 to 9
 
 Stack: React + TypeScript + Vite + Tailwind (frontend), FastAPI (backend), Supabase (Postgres, Auth, Storage), Render (hosting).
 
@@ -43,6 +43,15 @@ Stack: React + TypeScript + Vite + Tailwind (frontend), FastAPI (backend), Supab
 - **Location privacy:** donation coordinates are rounded to two decimal places in both the API and database. Public listings omit donor IDs and show an approximate pickup area only. Donors should enter a neighborhood or public meeting area, not a home address.
 - **Discovery and tracking:** the public page reuses the Leaflet/OpenStreetMap map and geocoding services. Donors contact organizations directly and record outcomes themselves. Donor-reported handovers may earn 10 GreenScore points, once per donation and subject to a database-enforced daily cap.
 - **Food safety:** storage, preparation, allergens, and pickup deadline are shown to potential recipients. TRASHMORPH does not certify food safety or arrange or guarantee collection. Signed-in users can report unsafe or misleading listings.
+
+## Added in Stage 8: Household Waste Pickup
+- Run `supabase/migrations/0008_household_waste_pickup.sql` after migrations 0001 to 0007. It enables Supabase `pg_cron` for automatic 35-day retention cleanup.
+- Sign-up distinguishes household members from recyclers. Recycler registration requires organization name, location, and contact details.
+- Household members can add one daily log with separate biodegradable and non-biodegradable items. Logs stay private to that household and recycler accounts, never appear in the normal marketplace, and are automatically deleted after 35 days.
+- Recycler accounts can browse active logs, request pickup, and mark accepted pickups as collected. The household must accept a request before pickup is confirmed. See `DEPLOY.md` for details.
+
+## Added in Stage 9: Recycler access
+- Run `supabase/migrations/0009_recycler_access.sql` after 0008. It backfills recycler signup metadata, adds profile activation for existing users, enforces household-only marketplace visibility for recycler accounts, and provides a role-checked RPC for recycler access to household logs.
 - **Food Rescue dashboard:** shows counts, reported quantities, activity, and categories from the signed-in donor's actual records. Reported totals are labeled as donor-reported, not independently verified.
 
 ## Added in Stage 7: inquiry replies

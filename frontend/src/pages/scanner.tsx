@@ -226,7 +226,6 @@ export function ScannerPage() {
           <h3 className="mt-3 font-semibold">Good to know</h3><p className="text-muted">{result.recycling_guidance}</p>
           {result.alternatives.length > 1 && <p className="mt-3 text-sm text-muted">Other possibilities: {result.alternatives.slice(1).map((a) => `${a.label} (${pct(a.confidence)})`).join(", ")}</p>}
           <p className="mt-4 text-xs text-muted">{result.disclaimer}{result.image_saved ? "" : " Your photo wasn't saved."}</p>
-          {!result.is_uncertain && result.category !== "other" && <div className="mt-4"><Link to={`/recyclers?material=${result.category}`} className="btn-outline">Find recyclers for this</Link></div>}
         </section>
       )}
 

@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.core.security import CurrentUser, get_current_user
-from app.schemas.profiles import DeleteAccount, Profile, ProfileUpdate, SettingsOut, SettingsUpdate
+from app.schemas.profiles import DeleteAccount, Profile, ProfileUpdate, RecyclerProfileIn, SettingsOut, SettingsUpdate
 from app.services import supabase_rest as db
 
 router = APIRouter(prefix="/api/v1", tags=["profile"])
-PROFILE_COLS = "id,full_name,avatar_url,preferred_location,role,created_at"
+PROFILE_COLS = "id,full_name,avatar_url,preferred_location,role,recycler_organization,recycler_location,recycler_contact,created_at"
 SETTINGS_COLS = "theme,notification_preferences"
 
 
@@ -28,6 +28,14 @@ async def update_me(body: ProfileUpdate, user: CurrentUser = Depends(get_current
         raise HTTPException(400, "No changes supplied")
     row = _one(await db.rest("PATCH", "profiles", user.token, params={"id": f"eq.{user.id}", "select": PROFILE_COLS}, json=changes))
     return Profile(**row, email=user.email)
+
+
+@router.post("/profiles/me/recycler", response_model=Profile)
+async def activate_recycler_profile(body: RecyclerProfileIn, user: CurrentUser = Depends(get_current_user)):
+    await db.rest("POST", "rpc/activate_my_recycler_profile", user.token, json={
+        "p_organization": body.organization, "p_location": body.location, "p_contact": body.contact,
+    })
+    return await get_me(user)
 
 
 @router.get("/settings/me", response_model=SettingsOut)

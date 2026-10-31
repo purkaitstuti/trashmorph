@@ -28,7 +28,7 @@ export async function api<T>(path: string, init: { method?: string; body?: unkno
   return json as T;
 }
 
-export type Profile = { id: string; email: string | null; full_name: string | null; avatar_url: string | null; preferred_location: string | null; role: string; created_at: string | null };
+export type Profile = { id: string; email: string | null; full_name: string | null; avatar_url: string | null; preferred_location: string | null; role: string; recycler_organization: string | null; recycler_location: string | null; recycler_contact: string | null; created_at: string | null };
 export type Settings = { theme: "light" | "dark" | "system"; notification_preferences: { in_app: boolean; email: boolean } };
 
 /** Multipart upload with progress (fetch can't report upload progress). */

@@ -9,8 +9,8 @@ import { ProfilePage, SettingsPage } from "../pages/account";
 import { DashboardPage } from "../pages/dashboard";
 import { CollectionDetailPage, CollectionsPage } from "../pages/collections";
 import { ScannerPage } from "../pages/scanner";
+import { HouseholdWastePage } from "../pages/household-waste";
 import { GreenScorePage } from "../pages/greenscore";
-import { RecyclerFormPage, RecyclersPage } from "../pages/recyclers";
 import { InquiriesPage, NotificationsPage } from "../pages/inbox";
 import { FoodDonationFormPage, FoodRescueDashboardPage, FoodRescuePage, MyFoodDonationsPage } from "../pages/food-rescue";
 import { ListingDetailPage, ListingFormPage, MarketplacePage, MyListingsPage, SavedPage } from "../pages/market";
@@ -27,7 +27,6 @@ export function App() {
         <Route path="contact" element={<ContactPage />} />
         <Route path="marketplace" element={<MarketplacePage />} />
         <Route path="marketplace/:id" element={<ListingDetailPage />} />
-        <Route path="recyclers" element={<RecyclersPage />} />
         <Route path="food-rescue" element={<FoodRescuePage />} />
         <Route path="privacy" element={<PrivacyPage />} />
         <Route path="terms" element={<TermsPage />} />
@@ -38,6 +37,7 @@ export function App() {
         <Route path="auth/callback" element={<AuthCallbackPage />} />
         <Route element={<ProtectedRoute />}>
           <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="waste-pickup" element={<HouseholdWastePage />} />
           <Route path="food-rescue/new" element={<FoodDonationFormPage />} />
           <Route path="food-rescue/:id/edit" element={<FoodDonationFormPage />} />
           <Route path="food-rescue/mine" element={<MyFoodDonationsPage />} />
@@ -45,7 +45,6 @@ export function App() {
           <Route path="my-listings" element={<MyListingsPage />} />
           <Route path="my-listings/new" element={<ListingFormPage />} />
           <Route path="my-listings/:id/edit" element={<ListingFormPage />} />
-          <Route path="recyclers/suggest" element={<RecyclerFormPage />} />
           <Route path="collections" element={<CollectionsPage />} />
           <Route path="collections/:id" element={<CollectionDetailPage />} />
           <Route path="scanner" element={<ScannerPage />} />

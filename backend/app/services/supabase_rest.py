@@ -48,6 +48,15 @@ async def _call(method: str, table: str, token: str | None, params: Params, json
                 503,
                 "Supabase's API has not picked up the waste_scans table yet. Confirm migration 0004 was run in the configured project, then run NOTIFY pgrst, 'reload schema' in its SQL Editor.",
             )
+        household_waste_call = table.startswith("household_waste_") or table.startswith("rpc/household_waste_") or table == "rpc/activate_my_recycler_profile"
+        recycler_profile_fields = table == "profiles" and any(
+            field in str(params) for field in ("recycler_organization", "recycler_location", "recycler_contact")
+        )
+        if (household_waste_call or recycler_profile_fields) and error_code in ("PGRST202", "PGRST204", "PGRST205"):
+            raise HTTPException(
+                503,
+                "Household Waste Pickup is not fully enabled in this Supabase project. Run migration 0008_household_waste_pickup.sql there, then run NOTIFY pgrst, 'reload schema' in its SQL Editor.",
+            )
         raise _fail(r.status_code)
     return r
 

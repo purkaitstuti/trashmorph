@@ -8,13 +8,28 @@ export const registerSchema = z.object({
   password: passwordRule,
   confirm: z.string(),
   terms: z.literal(true, { errorMap: () => ({ message: "Accept the terms to continue" }) }),
-}).refine((v) => v.password === v.confirm, { path: ["confirm"], message: "Passwords don't match" });
+  accountType: z.enum(["user", "recycler"]).default("user"),
+  recyclerOrganization: z.string().trim().max(160).default(""),
+  recyclerLocation: z.string().trim().max(200).default(""),
+  recyclerContact: z.string().trim().max(200).default(""),
+}).refine((v) => v.password === v.confirm, { path: ["confirm"], message: "Passwords don't match" })
+  .superRefine((v, ctx) => {
+    if (v.accountType !== "recycler") return;
+    if (v.recyclerOrganization.length < 2) ctx.addIssue({ code: "custom", path: ["recyclerOrganization"], message: "Enter your organization name" });
+    if (v.recyclerLocation.length < 2) ctx.addIssue({ code: "custom", path: ["recyclerLocation"], message: "Enter your organization location" });
+    if (v.recyclerContact.length < 5) ctx.addIssue({ code: "custom", path: ["recyclerContact"], message: "Enter contact details" });
+  });
 
 export const loginSchema = z.object({ email: z.string().trim().email("Enter a valid email address"), password: z.string().min(1, "Enter your password") });
 export const emailSchema = z.object({ email: z.string().trim().email("Enter a valid email address") });
 export const resetSchema = z.object({ password: passwordRule, confirm: z.string() }).refine((v) => v.password === v.confirm, { path: ["confirm"], message: "Passwords don't match" });
 export const contactSchema = z.object({ name: z.string().trim().min(1, "Enter your name").max(100), email: z.string().trim().email("Enter a valid email address"), message: z.string().trim().min(10, "Write at least 10 characters").max(2000) });
 export const profileSchema = z.object({ full_name: z.string().trim().min(1, "Enter your name").max(100), preferred_location: z.string().trim().max(120).optional() });
+export const recyclerProfileSchema = z.object({
+  organization: z.string().trim().min(2, "Enter your organization name").max(160),
+  location: z.string().trim().min(2, "Enter your organization location").max(200),
+  contact: z.string().trim().min(5, "Enter a contact number or email").max(200),
+});
 
 export const listingSchema = z.object({
   title: z.string().trim().min(3, "Use at least 3 characters").max(120),

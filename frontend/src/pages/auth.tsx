@@ -61,7 +61,8 @@ export function RegisterPage() {
   const pw = usePasswordToggle();
   const [error, setError] = useState<string | null>(null);
   const [sentTo, setSentTo] = useState<string | null>(null);
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<z.infer<typeof registerSchema>>({ resolver: zodResolver(registerSchema) });
+  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<z.infer<typeof registerSchema>>({ resolver: zodResolver(registerSchema), defaultValues: { accountType: "user", recyclerOrganization: "", recyclerLocation: "", recyclerContact: "" } });
+  const accountType = watch("accountType");
 
   if (loading) return <FullPageSpinner />;
   if (user && !sentTo) return <Navigate to="/dashboard" replace />;
@@ -75,15 +76,24 @@ export function RegisterPage() {
 
   const onSubmit = handleSubmit(async (v) => {
     setError(null);
-    try { const r = await signUp(v.email, v.password, v.fullName); if (r === "verify") setSentTo(v.email); }
+    try { const r = await signUp(v.email, v.password, { fullName: v.fullName, accountType: v.accountType, recyclerOrganization: v.recyclerOrganization, recyclerLocation: v.recyclerLocation, recyclerContact: v.recyclerContact }); if (r === "verify") setSentTo(v.email); }
     catch (e) { setError(msg(e, "We couldn't create your account. Please try again.")); }
   });
 
   return (
-    <AuthShell title="Create your account" subtitle="Start identifying waste and finding recycling options.">
+    <AuthShell title="Create your account" subtitle="Choose how you'll use TRASHMORPH.">
       <form onSubmit={onSubmit} noValidate className="space-y-4">
         {error && <ErrorNote>{error}</ErrorNote>}
         <Field label="Full name" autoComplete="name" error={errors.fullName?.message} {...register("fullName")} />
+        <fieldset className="space-y-2"><legend className="text-sm font-semibold">I am joining as</legend>
+          <label className="flex items-center gap-2 text-sm"><input type="radio" value="user" className="accent-[rgb(var(--primary))]" {...register("accountType")} /> Household member</label>
+          <label className="flex items-center gap-2 text-sm"><input type="radio" value="recycler" className="accent-[rgb(var(--primary))]" {...register("accountType")} /> Recycler or recycling organization</label>
+        </fieldset>
+        {accountType === "recycler" && <div className="space-y-3 rounded-xl border border-line p-4"><p className="text-sm text-muted">These details help households identify the organization requesting pickup.</p>
+          <Field label="Organization name" autoComplete="organization" error={errors.recyclerOrganization?.message} {...register("recyclerOrganization")} />
+          <Field label="Organization location" placeholder="City, area, or address" error={errors.recyclerLocation?.message} {...register("recyclerLocation")} />
+          <Field label="Contact details" placeholder="Phone, email, or both" error={errors.recyclerContact?.message} {...register("recyclerContact")} />
+        </div>}
         <Field label="Email" type="email" autoComplete="email" error={errors.email?.message} {...register("email")} />
         <Field label="Password" type={pw.type} trailing={pw.trailing} autoComplete="new-password" hint="At least 10 characters, with a letter and a number." error={errors.password?.message} {...register("password")} />
         <Field label="Confirm password" type={pw.type} autoComplete="new-password" error={errors.confirm?.message} {...register("confirm")} />
@@ -96,8 +106,7 @@ export function RegisterPage() {
         </div>
         <button className="btn-primary w-full" disabled={isSubmitting}>{isSubmitting ? "Creating account…" : "Create account"}</button>
       </form>
-      <OrDivider />
-      <GoogleButton label="Sign up with Google" />
+      {accountType === "user" ? <><OrDivider /><GoogleButton label="Sign up with Google" /></> : <p className="mt-4 text-center text-xs text-muted">Recycler accounts need the organization details above, so continue with email and password.</p>}
       <p className="mt-5 text-center text-sm text-muted">Already registered? <Link to="/login" className="font-semibold text-primary underline">Sign in</Link></p>
     </AuthShell>
   );

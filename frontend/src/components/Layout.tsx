@@ -9,8 +9,8 @@ import { useAuth } from "../providers/AuthProvider";
 import { ThemeToggle } from "./ThemeToggle";
 
 type L = readonly (readonly [string, string])[];
-const publicLinks: L = [["/", "Home"], ["/marketplace", "Marketplace"], ["/recyclers", "Recyclers"], ["/food-rescue", "Food Rescue"], ["/recycling-guide", "Recycling guide"], ["/about", "About"], ["/contact", "Contact"]];
-const mainLinks: L = [["/dashboard", "Dashboard"], ["/scanner", "Scanner"], ["/marketplace", "Marketplace"], ["/recyclers", "Recyclers"], ["/food-rescue", "Food Rescue"], ["/collections", "Collections"], ["/my-listings", "My listings"]];
+const publicLinks: L = [["/", "Home"], ["/marketplace", "Marketplace"], ["/food-rescue", "Food Rescue"], ["/recycling-guide", "Recycling guide"], ["/about", "About"], ["/contact", "Contact"]];
+const mainLinks: L = [["/dashboard", "Dashboard"], ["/scanner", "Scanner"], ["/marketplace", "Marketplace"], ["/food-rescue", "Food Rescue"], ["/waste-pickup", "Waste Pickup"], ["/collections", "Collections"], ["/my-listings", "My listings"]];
 const accountLinks: L = [["/food-rescue/mine", "My food listings"], ["/food-rescue/dashboard", "Food Rescue dashboard"], ["/greenscore", "GreenScore"], ["/analytics", "Analytics"], ["/saved", "Saved"], ["/inquiries", "Inquiries"], ["/recycling-guide", "Recycling guide"], ["/profile", "Profile"], ["/settings", "Settings"]];
 
 function Logo() {

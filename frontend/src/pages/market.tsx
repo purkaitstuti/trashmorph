@@ -28,17 +28,18 @@ function ListGrid({ q, showStatus }: { q: { data?: Page<Listing>; isLoading: boo
 
 export function MarketplacePage() {
   const { user } = useAuth();
+  const profile = useQuery({ queryKey: ["profile", user?.id], queryFn: () => api<{ role: string }>("/api/v1/profiles/me"), enabled: !!user });
   const [params, setParams] = useSearchParams();
   const page = Math.max(1, Number(params.get("page")) || 1);
   const qs = new URLSearchParams();
   FILTER_KEYS.forEach((k) => { const v = params.get(k); if (v) qs.set(k, v); });
   qs.set("page", String(page)); qs.set("page_size", String(PAGE_SIZE));
-  const query = useQuery({ queryKey: ["listings", qs.toString(), !!user], queryFn: () => api<Page<Listing>>(`/api/v1/listings?${qs}`) });
+  const query = useQuery({ queryKey: ["listings", qs.toString(), user?.id ?? "guest"], queryFn: () => api<Page<Listing>>(`/api/v1/listings?${qs}`) });
   const filtered = FILTER_KEYS.some((k) => params.get(k));
 
   return (
     <>
-      <PageHeader title="Marketplace">Reusable items and recyclable materials from people nearby. Contact sellers through an inquiry; TRASHMORPH doesn't process payments.</PageHeader>
+      <PageHeader title="Marketplace">{profile.data?.role === "recycler" ? "Household listings available for collection or reuse." : "Reusable items and recyclable materials from people nearby."} Contact sellers through an inquiry; TRASHMORPH doesn't process payments.</PageHeader>
       <form key={params.toString()} className="card mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" onSubmit={(e) => {
         e.preventDefault();
         const f = new FormData(e.currentTarget); const next = new URLSearchParams();

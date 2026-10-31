@@ -8,7 +8,7 @@ import { Link, useNavigate } from "react-router-dom";
 import type { z } from "zod";
 import { ErrorNote, Field, PageHeader, Spinner } from "../components/ui";
 import { api, type Profile, type Settings } from "../lib/api";
-import { profileSchema } from "../lib/schemas";
+import { profileSchema, recyclerProfileSchema } from "../lib/schemas";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../providers/AuthProvider";
 import { useTheme, type Theme } from "../providers/ThemeProvider";
@@ -24,11 +24,17 @@ export function ProfilePage() {
   const { data, isLoading, isError, error } = useProfile();
   const [uploading, setUploading] = useState(false);
   const { register, handleSubmit, reset, formState: { errors, isDirty } } = useForm<z.infer<typeof profileSchema>>({ resolver: zodResolver(profileSchema) });
+  const recyclerForm = useForm<z.infer<typeof recyclerProfileSchema>>({ resolver: zodResolver(recyclerProfileSchema), defaultValues: { organization: "", location: "", contact: "" } });
   useEffect(() => { if (data) reset({ full_name: data.full_name ?? "", preferred_location: data.preferred_location ?? "" }); }, [data, reset]);
 
   const save = useMutation({
     mutationFn: (body: Partial<Profile>) => api<Profile>("/api/v1/profiles/me", { method: "PATCH", body }),
     onSuccess: (p) => { qc.setQueryData(["profile", user?.id], p); toast.success("Profile saved"); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const activateRecycler = useMutation({
+    mutationFn: (body: z.infer<typeof recyclerProfileSchema>) => api<Profile>("/api/v1/profiles/me/recycler", { method: "POST", body }),
+    onSuccess: (p) => { qc.setQueryData(["profile", user?.id], p); void qc.invalidateQueries({ queryKey: ["household-waste-available"] }); toast.success("Recycler profile activated."); },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -52,6 +58,7 @@ export function ProfilePage() {
       <PageHeader title="Your profile" />
       {isError && <ErrorNote>{(error as Error).message}</ErrorNote>}
       {isLoading ? <Spinner /> : (
+        <>
         <div className="grid max-w-3xl gap-6 md:grid-cols-[auto_1fr]">
           <div className="flex flex-col items-center gap-3">
             {data?.avatar_url ? <img src={data.avatar_url} alt="Your profile" className="h-28 w-28 rounded-full object-cover" /> : <div className="flex h-28 w-28 items-center justify-center rounded-full bg-subtle"><User className="h-10 w-10 text-muted" aria-hidden /></div>}
@@ -66,6 +73,8 @@ export function ProfilePage() {
             <button className="btn-primary" disabled={!isDirty || save.isPending}>{save.isPending ? "Saving…" : "Save changes"}</button>
           </form>
         </div>
+        {data?.role === "recycler" ? <section className="card mt-6 max-w-3xl"><p className="badge">Recycler account</p><h2 className="mt-3 text-xl font-semibold">Organization details</h2><dl className="mt-3 grid gap-3 sm:grid-cols-2"><div><dt className="text-sm text-muted">Organization</dt><dd className="font-semibold">{data.recycler_organization}</dd></div><div><dt className="text-sm text-muted">Location</dt><dd className="font-semibold">{data.recycler_location}</dd></div><div><dt className="text-sm text-muted">Contact</dt><dd className="font-semibold">{data.recycler_contact}</dd></div></dl></section> : data?.role === "user" ? <section className="card mt-6 max-w-3xl"><h2 className="text-xl font-semibold">Recycler profile</h2><p className="mt-1 text-sm text-muted">If you collect household waste as an organization, add your details to access household pickup logs.</p><form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={recyclerForm.handleSubmit((v) => activateRecycler.mutate(v))}><Field label="Organization name" error={recyclerForm.formState.errors.organization?.message} {...recyclerForm.register("organization")} /><Field label="Organization location" error={recyclerForm.formState.errors.location?.message} {...recyclerForm.register("location")} /><Field label="Contact number or email" error={recyclerForm.formState.errors.contact?.message} {...recyclerForm.register("contact")} /><button className="btn-primary sm:col-span-2" disabled={activateRecycler.isPending}>{activateRecycler.isPending ? "Saving…" : "Activate recycler profile"}</button></form></section> : <section className="card mt-6 max-w-3xl"><h2 className="font-semibold">Account type</h2><p className="mt-1 text-muted">Administrator</p></section>}
+        </>
       )}
     </>
   );

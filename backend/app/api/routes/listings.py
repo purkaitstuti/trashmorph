@@ -60,6 +60,10 @@ async def browse(
     user: CurrentUser | None = Depends(get_optional_user),
 ):
     params: list[tuple[str, str]] = [("select", COLS), ("status", "eq.active")]
+    if user:
+        profiles = await db.rest("GET", "profiles", user.token, params={"id": f"eq.{user.id}", "select": "role"})
+        if profiles and profiles[0].get("role") == "recycler":
+            params.append(("seller_type", "eq.household"))
     if category:
         params.append(("category", f"eq.{category}"))
     if listing_type:

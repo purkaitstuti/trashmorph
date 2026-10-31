@@ -68,7 +68,7 @@ export function NotificationsPage() {
       {q.data && q.data.items.length === 0 && <EmptyState title="You're all caught up">Updates about your listings and inquiries will show up here.</EmptyState>}
       <ul className="space-y-3">
         {q.data?.items.map((n) => (
-          <li key={n.id}><NotificationCard n={n} onRead={() => { if (!n.read_at) readOne.mutate(n.id); }} onOpen={() => { if (n.notification_type === "inquiry" || n.notification_type === "inquiry_reply") navigate("/inquiries"); else if (n.notification_type === "collection" && n.reference_id) navigate(`/collections/${n.reference_id}`); }} /></li>
+          <li key={n.id}><NotificationCard n={n} onRead={() => { if (!n.read_at) readOne.mutate(n.id); }} onOpen={() => { if (n.notification_type === "inquiry" || n.notification_type === "inquiry_reply") navigate("/inquiries"); else if (n.notification_type === "collection" && n.reference_id) navigate(`/collections/${n.reference_id}`); else if (n.notification_type === "household_waste_pickup") navigate("/waste-pickup"); }} /></li>
         ))}
       </ul>
       {q.data && <Pagination page={page} total={q.data.total} pageSize={20} onPage={setPage} />}

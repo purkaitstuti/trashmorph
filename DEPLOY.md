@@ -3,7 +3,7 @@
 Nothing in this repo has been deployed for you. Follow these steps, then run the verification checklist at the end and only call the site live once those checks pass.
 
 ## 1. Supabase (production project)
-1. Run the migrations in `supabase/migrations/` in order (0001 to 0007) in the SQL editor.
+1. Run the migrations in `supabase/migrations/` in order (0001 to 0009) in the SQL editor. Migration 0008 enables the `pg_cron` extension to automatically remove household waste logs after 35 days. Migration 0009 enables existing users to activate recycler profiles, restricts recycler marketplace results to household listings, and provides recycler-only access to household logs.
 2. Authentication > URL Configuration: set **Site URL** to your Render frontend URL (known after step 4) and add Redirect URLs `<frontend>/auth/callback` and `<frontend>/reset-password`. Keep the localhost entries for development.
 3. Authentication > Providers > Google: paste the Google client ID and secret. In Google Cloud keep the redirect URI `https://<project-ref>.supabase.co/auth/v1/callback`; optionally add your frontend URL to Authorized JavaScript origins.
 4. Authentication > Emails: Supabase's built-in sender is rate-limited. For real users configure a custom SMTP provider.
@@ -30,6 +30,11 @@ Render's disk is ephemeral, which is why the model is downloaded at every build.
 
 ## 7. Reviewing community recyclers
 New suggestions are `pending` and visible only to their submitter. Review them in the Supabase SQL editor: `update public.recyclers set verification_status = 'community' where id = '...';` (or `'verified'`, `'rejected'`).
+
+## 8. Household Waste Pickup
+Household and recycler account types are selected at sign-up. Recycler accounts provide an organization name, location, and contact details. Households can log biodegradable and non-biodegradable waste once per day; recyclers can browse active household logs and request pickups. Household approval is required to confirm a request. Supabase `pg_cron` deletes cycles and their logs after 35 days.
+
+Existing household accounts that need recycler access can activate a recycler profile from the Profile page. Their marketplace view will then show household listings only.
 
 ## 8. Verification checklist (do these on the deployed URLs)
 - [ ] Frontend loads, and refreshing a nested URL such as `/marketplace` works

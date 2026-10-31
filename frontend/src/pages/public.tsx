@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowRight, BarChart3, Leaf, MapPin, ScanLine, ShoppingBag, Truck } from "lucide-react";
+import { ArrowRight, BarChart3, Leaf, ScanLine, ShoppingBag, Truck } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -12,7 +12,6 @@ import { useAuth } from "../providers/AuthProvider";
 
 const features = [
   { icon: ScanLine, title: "AI waste scanner", text: "Photograph an item and get a suggested category and disposal guidance.", live: true, badge: "Works once a model is configured" },
-  { icon: MapPin, title: "Recycler discovery", text: "Find recycling and reuse options on a map, filtered by material.", live: true },
   { icon: ShoppingBag, title: "Reuse marketplace", text: "List items you no longer need and find reusable materials from others.", live: true },
   { icon: Truck, title: "Collection tracking", text: "Coordinate pickups and follow each request from start to finish.", live: true },
   { icon: Leaf, title: "GreenScore", text: "Earn points for recorded recycling and reuse activity.", live: true },
@@ -28,7 +27,7 @@ export function HomePage() {
       <section className="grid items-center gap-10 py-6 lg:grid-cols-2">
         <div>
           <h1 className="text-4xl font-bold leading-[1.05] sm:text-6xl">Give your waste a second life.</h1>
-          <p className="mt-5 max-w-xl text-lg text-muted">Identify waste with AI, discover nearby recycling opportunities, connect with recyclers, and track your environmental impact—all in one place.</p>
+          <p className="mt-5 max-w-xl text-lg text-muted">Identify waste with AI, share reusable items, rescue surplus food, and track your environmental impact—all in one place.</p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link to={user ? "/dashboard" : "/register"} className="btn-primary">Get started<ArrowRight className="h-4 w-4" aria-hidden /></Link>
             <a href="#features" className="btn-outline">Explore features</a>
@@ -174,11 +173,11 @@ export function PrivacyPage() {
     <article className="max-w-3xl space-y-5">
       <PageHeader title="Privacy Policy">How TRASHMORPH handles your data.</PageHeader>
       {[
-        ["What we collect", "Your email address, name and password (handled by our authentication provider, Supabase; we never see or store your password). If you add them, a profile photo and a preferred location. Messages you send through the contact form."],
+        ["What we collect", "Your email address, name and password (handled by our authentication provider, Supabase; we never see or store your password). If you add them, a profile photo and preferred location. Recycler accounts also provide organization, location and contact details. Household Waste Pickup logs contain the daily items and area you enter. Messages you send through the contact form."],
         ["How we use it", "To run your account, show your profile, and respond to your messages. We don't sell your data."],
         ["Photos", "Your profile photo is stored in a public bucket so it can be displayed. Don't upload anything you don't want to be publicly viewable."],
         ["Location", "We only read your device location when you press a location button, and only after your browser asks permission. To turn coordinates into a place name or to search for a place, your coordinates or search text are sent to OpenStreetMap's Nominatim service. Coordinates you choose to save on a listing or recycler suggestion are stored with it. A preferred location in your profile is text you type and can change or remove at any time."],
-        ["Where data is stored", "In Supabase (database, authentication and file storage). Access to your records is restricted to your account by database security rules."],
+        ["Where data is stored", "In Supabase (database, authentication and file storage). Household Waste Pickup logs are shared only with recycler accounts so they can request collection; those logs and related requests are automatically deleted after 35 days. Other account records are restricted by database security rules."],
         ["Deleting your data", "Delete your account in Settings to permanently remove your account, profile, settings and uploaded photo. Contact messages are kept so we can respond and may be removed on request."],
         ["Changes", "We'll update this page if our practices change as new features are added."],
       ].map(([h, p]) => <section key={h}><h2 className="text-xl font-bold">{h}</h2><p className="mt-1 text-muted">{p}</p></section>)}
