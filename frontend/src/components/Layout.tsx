@@ -9,9 +9,9 @@ import { useAuth } from "../providers/AuthProvider";
 import { ThemeToggle } from "./ThemeToggle";
 
 type L = readonly (readonly [string, string])[];
-const publicLinks: L = [["/", "Home"], ["/marketplace", "Marketplace"], ["/recyclers", "Recyclers"], ["/recycling-guide", "Recycling guide"], ["/about", "About"], ["/contact", "Contact"]];
-const mainLinks: L = [["/dashboard", "Dashboard"], ["/scanner", "Scanner"], ["/marketplace", "Marketplace"], ["/recyclers", "Recyclers"], ["/collections", "Collections"], ["/my-listings", "My listings"]];
-const accountLinks: L = [["/greenscore", "GreenScore"], ["/analytics", "Analytics"], ["/saved", "Saved"], ["/inquiries", "Inquiries"], ["/recycling-guide", "Recycling guide"], ["/profile", "Profile"], ["/settings", "Settings"]];
+const publicLinks: L = [["/", "Home"], ["/marketplace", "Marketplace"], ["/recyclers", "Recyclers"], ["/food-rescue", "Food Rescue"], ["/recycling-guide", "Recycling guide"], ["/about", "About"], ["/contact", "Contact"]];
+const mainLinks: L = [["/dashboard", "Dashboard"], ["/scanner", "Scanner"], ["/marketplace", "Marketplace"], ["/recyclers", "Recyclers"], ["/food-rescue", "Food Rescue"], ["/collections", "Collections"], ["/my-listings", "My listings"]];
+const accountLinks: L = [["/food-rescue/mine", "My food listings"], ["/food-rescue/dashboard", "Food Rescue dashboard"], ["/greenscore", "GreenScore"], ["/analytics", "Analytics"], ["/saved", "Saved"], ["/inquiries", "Inquiries"], ["/recycling-guide", "Recycling guide"], ["/profile", "Profile"], ["/settings", "Settings"]];
 
 function Logo() {
   return <Link to="/" className="flex items-center gap-2 font-display text-lg font-bold"><Recycle className="h-6 w-6 text-primary" aria-hidden />TRASHMORPH</Link>;

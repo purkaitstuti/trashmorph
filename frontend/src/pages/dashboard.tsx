@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { BarChart3, BookOpen, Heart, Inbox, Leaf, List, MapPin, Plus, ScanLine, Store, Truck } from "lucide-react";
+import { BarChart3, BookOpen, Heart, Inbox, Leaf, List, MapPin, Plus, ScanLine, Store, Truck, Utensils } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ListingCard } from "../components/listing";
 import { ErrorNote, PageHeader, Spinner } from "../components/ui";
@@ -32,6 +32,7 @@ export function DashboardPage() {
           <Link to="/saved" className="btn-outline"><Heart className="h-4 w-4" aria-hidden />Saved listings</Link>
           <Link to="/inquiries" className="btn-outline"><Inbox className="h-4 w-4" aria-hidden />Inquiries</Link>
           <Link to="/recyclers" className="btn-outline"><MapPin className="h-4 w-4" aria-hidden />Find recyclers</Link>
+          <Link to="/food-rescue" className="btn-outline"><Utensils className="h-4 w-4" aria-hidden />Food Rescue</Link>
           <Link to="/collections" className="btn-outline"><Truck className="h-4 w-4" aria-hidden />Track collections</Link>
           <Link to="/greenscore" className="btn-outline"><Leaf className="h-4 w-4" aria-hidden />GreenScore</Link>
           <Link to="/recycling-guide" className="btn-outline"><BookOpen className="h-4 w-4" aria-hidden />Recycling guide</Link>

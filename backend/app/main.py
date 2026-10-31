@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 
 from app.api.routes import analytics, waste
 from app.core.config import get_settings
-from app.api.routes import collections, contact, dashboard, greenscore, health, listings, marketplace, notifications, profiles, recyclers
+from app.api.routes import collections, contact, dashboard, food_rescue, greenscore, health, listings, marketplace, notifications, profiles, recyclers
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 log = logging.getLogger("trashmorph")
@@ -37,6 +37,7 @@ def create_app() -> FastAPI:
     app.include_router(notifications.router)
     app.include_router(dashboard.router)
     app.include_router(recyclers.router)
+    app.include_router(food_rescue.router)
     app.include_router(collections.router)
     app.include_router(greenscore.router)
     app.include_router(waste.router)

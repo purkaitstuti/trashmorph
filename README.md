@@ -1,4 +1,4 @@
-# TRASHMORPH — Stages 1 to 4
+# TRASHMORPH — Stages 1 to 5
 
 Stack: React + TypeScript + Vite + Tailwind (frontend), FastAPI (backend), Supabase (Postgres, Auth, Storage), Render (hosting).
 
@@ -35,6 +35,15 @@ Stack: React + TypeScript + Vite + Tailwind (frontend), FastAPI (backend), Supab
 - **Run this workspace's backend:** from `backend`, use `\.venv\Scripts\python.exe -m uvicorn app.main:app --reload`. This selects the configured CPython environment with the JWT crypto and ONNX dependencies installed.
 - **Analytics:** six charts (listings by category and per week, collection requests by status and per week, GreenScore points per week, scans by category) with date and category filters, a data table under each chart, and empty states. They count events from your own records only, never weights, carbon or landfill estimates.
 - **Deploying:** see `DEPLOY.md`. These appear as "Coming soon" and nothing fakes them.
+
+## Added in Stage 5: Food Rescue
+- **Run `supabase/migrations/0005_food_rescue.sql` after 0004 and `0006_food_rescue_show_review_queue.sql` after 0005.** No new npm or Python dependencies are needed.
+- **Food Rescue:** an independent food donation flow, separate from recyclable listings. Authenticated donors can list, edit, cancel, remove, and mark food as donor-reported donated. Food details include preparation time, storage conditions, allergens, a pickup deadline, and an optional photo. The database enforces ownership and status rules; outcomes are never presented as independently verified.
+- **Organization directory:** the migration intentionally contains no invented NGO seed records. Platform staff add organizations in Supabase. `needs_review` entries display with a clear warning; `verified` means the directory details were checked, not that the organization agreed to accept a specific donation. Maintain contact details, operating hours, known requirements, and source notes.
+- **Location privacy:** donation coordinates are rounded to two decimal places in both the API and database. Public listings omit donor IDs and show an approximate pickup area only. Donors should enter a neighborhood or public meeting area, not a home address.
+- **Discovery and tracking:** the public page reuses the Leaflet/OpenStreetMap map and geocoding services. Donors contact organizations directly and record outcomes themselves. Donor-reported handovers may earn 10 GreenScore points, once per donation and subject to a database-enforced daily cap.
+- **Food safety:** storage, preparation, allergens, and pickup deadline are shown to potential recipients. TRASHMORPH does not certify food safety or arrange or guarantee collection. Signed-in users can report unsafe or misleading listings.
+- **Food Rescue dashboard:** shows counts, reported quantities, activity, and categories from the signed-in donor's actual records. Reported totals are labeled as donor-reported, not independently verified.
 
 ## Setup
 1. **Supabase**: create a project. In the SQL editor run `supabase/migrations/0001_foundation.sql`.

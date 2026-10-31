@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import { categoryLabel } from "../lib/listings";
 import { directionsUrl, typeLabel, type Recycler } from "../lib/recyclers";
+import { foodDirectionsUrl, ORG_TYPES, type FoodOrganization } from "../lib/foodRescue";
 
 L.Icon.Default.mergeOptions({ iconUrl: icon, iconRetinaUrl: icon2x, shadowUrl: shadow });
 type Point = { lat: number; lng: number };
@@ -39,6 +40,23 @@ export function RecyclerMap({ items, center }: { items: Recycler[]; center: Poin
       ))}
     </MapContainer>
   );
+}
+
+function OrganizationView({ items, center }: { items: FoodOrganization[]; center: Point | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (center) map.setView([center.lat, center.lng], 12);
+    else if (items.length) map.fitBounds(L.latLngBounds(items.map((i) => [i.latitude, i.longitude] as [number, number])), { padding: [30, 30], maxZoom: 14 });
+  }, [items, center, map]);
+  return null;
+}
+
+export function FoodOrganizationMap({ items, center }: { items: FoodOrganization[]; center: Point | null }) {
+  return <MapContainer center={center ? [center.lat, center.lng] : [20, 0]} zoom={center ? 12 : 2} scrollWheelZoom className="isolate z-0 h-[52vh] min-h-[300px] w-full rounded-xl border border-line" aria-label="Map of food rescue organizations">
+    <TileLayer url={TILES} attribution={ATTRIBUTION} /><OrganizationView items={items} center={center} />
+    {center && <Marker position={[center.lat, center.lng]}><Popup>Search area</Popup></Marker>}
+    {items.map((o) => <Marker key={o.id} position={[o.latitude, o.longitude]}><Popup><strong>{o.name}</strong><br />{ORG_TYPES[o.organization_type] ?? o.organization_type}<br /><a href={foodDirectionsUrl(o)} target="_blank" rel="noopener noreferrer">Directions</a></Popup></Marker>)}
+  </MapContainer>;
 }
 
 function Clicks({ onPick }: { onPick: (p: Point) => void }) {

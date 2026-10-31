@@ -51,7 +51,7 @@ export function GreenScorePage() {
 
       <section className="mt-6" aria-label="Breakdown">
         <h2 className="text-xl font-bold">Breakdown</h2>
-        {d.breakdown.length === 0 ? <p className="mt-2 text-muted">No points yet. Publish a listing or complete a collection to earn your first points.</p> : (
+        {d.breakdown.length === 0 ? <p className="mt-2 text-muted">No points yet. Publish a listing, complete a collection, or record a food donation handover to earn points.</p> : (
           <div className="mt-3 overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b border-line text-muted"><th className="py-2 pr-4">Activity</th><th className="py-2 pr-4">Times</th><th className="py-2">Points</th></tr></thead>
             <tbody>{d.breakdown.map((b) => <tr key={b.activity_type} className="border-b border-line"><td className="py-2 pr-4">{label(b.activity_type)}</td><td className="py-2 pr-4">{b.events}</td><td className="py-2 font-semibold">{b.points}</td></tr>)}</tbody></table></div>
         )}
@@ -67,7 +67,7 @@ export function GreenScorePage() {
       <section className="card mt-6" aria-label="How points work">
         <h2 className="text-xl font-bold">How points work</h2>
         <ul className="mt-3 space-y-2 text-sm">{d.policy.map((p) => <li key={p.activity_type}><strong>+{p.points}</strong> {p.label}. {VERIF[p.verification]}. Up to {p.daily_cap} per day.</li>)}</ul>
-        <p className="mt-3 text-sm text-muted">Points are calculated and recorded by the server, once per event, and can't be edited from your account. Collection points are awarded only when the lister marks the handover completed. Because two accounts could cooperate to inflate scores, daily limits apply, and we may adjust the rules as the platform grows.</p>
+        <p className="mt-3 text-sm text-muted">Points are calculated and recorded by the server, once per event, and can't be edited from your account. Collection points are awarded only when the lister marks the handover completed. Food Rescue points are based on donor-reported handovers and aren't independently verified.</p>
       </section>
     </>
   );

@@ -12,6 +12,7 @@ POLICY = [
     {"activity_type": "listing_published", "label": "Publish a listing", "points": 5, "daily_cap": 3, "verification": "user_reported"},
     {"activity_type": "collection_collected", "label": "Collect an item (request completed)", "points": 20, "daily_cap": 5, "verification": "counterparty_confirmed"},
     {"activity_type": "collection_handed_over", "label": "Hand over an item (request completed)", "points": 15, "daily_cap": 5, "verification": "counterparty_confirmed"},
+    {"activity_type": "food_donation_reported", "label": "Report a food donation handover", "points": 10, "daily_cap": 3, "verification": "user_reported"},
 ]
 LEVELS = [(0, "Seedling"), (50, "Sprout"), (150, "Sapling"), (400, "Grove")]
 
@@ -28,6 +29,7 @@ def badges_for(events: dict[str, int], total: int) -> list[dict]:
         ("first_listing", "First listing", "Publish your first listing", events.get("listing_published", 0) >= 1),
         ("first_handover", "First handover", "Complete one collection", done >= 1),
         ("community_helper", "Community helper", "Complete 5 collections", done >= 5),
+        ("food_rescuer", "Food rescuer", "Report a food donation handover", events.get("food_donation_reported", 0) >= 1),
         ("sprout", "Sprout", "Reach 50 points", total >= 50),
         ("grove", "Grove", "Reach 400 points", total >= 400),
     ]

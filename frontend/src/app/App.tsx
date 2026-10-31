@@ -12,6 +12,7 @@ import { ScannerPage } from "../pages/scanner";
 import { GreenScorePage } from "../pages/greenscore";
 import { RecyclerFormPage, RecyclersPage } from "../pages/recyclers";
 import { InquiriesPage, NotificationsPage } from "../pages/inbox";
+import { FoodDonationFormPage, FoodRescueDashboardPage, FoodRescuePage, MyFoodDonationsPage } from "../pages/food-rescue";
 import { ListingDetailPage, ListingFormPage, MarketplacePage, MyListingsPage, SavedPage } from "../pages/market";
 
 const AnalyticsPage = lazy(() => import("../pages/analytics").then((m) => ({ default: m.AnalyticsPage })));
@@ -27,6 +28,7 @@ export function App() {
         <Route path="marketplace" element={<MarketplacePage />} />
         <Route path="marketplace/:id" element={<ListingDetailPage />} />
         <Route path="recyclers" element={<RecyclersPage />} />
+        <Route path="food-rescue" element={<FoodRescuePage />} />
         <Route path="privacy" element={<PrivacyPage />} />
         <Route path="terms" element={<TermsPage />} />
         <Route path="login" element={<LoginPage />} />
@@ -36,6 +38,10 @@ export function App() {
         <Route path="auth/callback" element={<AuthCallbackPage />} />
         <Route element={<ProtectedRoute />}>
           <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="food-rescue/new" element={<FoodDonationFormPage />} />
+          <Route path="food-rescue/:id/edit" element={<FoodDonationFormPage />} />
+          <Route path="food-rescue/mine" element={<MyFoodDonationsPage />} />
+          <Route path="food-rescue/dashboard" element={<FoodRescueDashboardPage />} />
           <Route path="my-listings" element={<MyListingsPage />} />
           <Route path="my-listings/new" element={<ListingFormPage />} />
           <Route path="my-listings/:id/edit" element={<ListingFormPage />} />
