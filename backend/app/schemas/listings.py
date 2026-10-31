@@ -1,6 +1,6 @@
 from typing import Generic, Literal, TypeVar
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 T = TypeVar("T")
 Category = Literal["plastic", "paper", "cardboard", "glass", "metal", "organic", "electronic", "textile", "general", "other"]
@@ -102,6 +102,18 @@ class StatusChange(_Fields):
 class InquiryIn(_Fields):
     message: str = Field(min_length=10, max_length=1000)
     reply_contact: str | None = Field(default=None, max_length=120)
+
+
+class InquiryReplyIn(_Fields):
+    message: str = Field(min_length=1, max_length=2000)
+
+    @field_validator("message")
+    @classmethod
+    def _not_blank(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Write a reply before sending")
+        return value
 
 
 class Inquiry(BaseModel):

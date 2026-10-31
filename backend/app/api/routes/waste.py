@@ -10,7 +10,7 @@ from fastapi.concurrency import run_in_threadpool
 
 from app.core.config import Settings, get_settings
 from app.core.security import CurrentUser, get_current_user
-from app.ml.classifier import ModelUnavailable, build_result, get_classifier
+from app.ml.classifier import ModelUnavailable, build_result, classify_image_regions, get_classifier
 from app.ml.guidance import DISCLAIMER
 from app.ml.images import read_limited, validate_image
 from app.schemas.listings import Page
@@ -60,9 +60,10 @@ async def classify(
     try:
         async with _inference:
             preds = await run_in_threadpool(clf.predict, data)
+            result = build_result(preds, settings.min_confidence)
+            candidates = await run_in_threadpool(classify_image_regions, clf, data, settings.min_confidence, preds)
     except Exception:  # noqa: BLE001
         raise HTTPException(500, "We couldn't analyse that image. Try a different photo.") from None
-    result = build_result(preds, settings.min_confidence)
 
     image_path = None
     if save_image:
@@ -75,7 +76,7 @@ async def classify(
     rows = await db.rest("POST", "waste_scans", user.token, json={
         "user_id": user.id, "image_path": image_path, "category": result["category"], "confidence": result["confidence"],
         "top_guess": result["top_guess"], "suggested_action": result["suggested_action"], "is_uncertain": result["is_uncertain"], "model_version": clf.version})
-    return {**result, "scan_id": rows[0]["id"], "model_version": clf.version, "image_saved": image_path is not None, "disclaimer": DISCLAIMER}
+    return {**result, "candidates": candidates, "scan_id": rows[0]["id"], "model_version": clf.version, "image_saved": image_path is not None, "disclaimer": DISCLAIMER}
 
 
 @router.get("/scans", response_model=Page[ScanItem])

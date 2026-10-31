@@ -3,7 +3,7 @@
 Nothing in this repo has been deployed for you. Follow these steps, then run the verification checklist at the end and only call the site live once those checks pass.
 
 ## 1. Supabase (production project)
-1. Run the four migrations in `supabase/migrations/` in order (0001 to 0004) in the SQL editor.
+1. Run the migrations in `supabase/migrations/` in order (0001 to 0007) in the SQL editor.
 2. Authentication > URL Configuration: set **Site URL** to your Render frontend URL (known after step 4) and add Redirect URLs `<frontend>/auth/callback` and `<frontend>/reset-password`. Keep the localhost entries for development.
 3. Authentication > Providers > Google: paste the Google client ID and secret. In Google Cloud keep the redirect URI `https://<project-ref>.supabase.co/auth/v1/callback`; optionally add your frontend URL to Authorized JavaScript origins.
 4. Authentication > Emails: Supabase's built-in sender is rate-limited. For real users configure a custom SMTP provider.

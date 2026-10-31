@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.api.routes.listings import COLS
 from app.core.security import CurrentUser, get_current_user
-from app.schemas.listings import Inquiry, InquiryIn, Listing, Page, ReportIn
+from app.schemas.listings import Inquiry, InquiryIn, InquiryReplyIn, Listing, Page, ReportIn
 from app.services import supabase_rest as db
 
 router = APIRouter(prefix="/api/v1", tags=["marketplace"])
@@ -71,6 +71,43 @@ async def list_inquiries(box: Literal["received", "sent"] = "received", page: in
         names = {p["id"]: p["full_name"] for p in profs or []}
     items = [{**r, "listing_title": (r.get("listing") or {}).get("title") or "Listing no longer available", "other_party_name": names.get(r[other])} for r in rows]
     return {"items": items, "total": total, "page": page, "page_size": page_size}
+
+
+async def _inquiry_thread(inquiry_id: UUID, user: CurrentUser) -> dict:
+    rows = await db.rest("GET", "marketplace_inquiries", user.token, params={"id": f"eq.{inquiry_id}", "select": "id,listing_id,sender_id,recipient_id,message,reply_contact,status,created_at,listing:waste_listings(title)"})
+    if not rows:
+        raise HTTPException(404, "Inquiry not found")
+    inquiry = rows[0]
+    if user.id not in (inquiry["sender_id"], inquiry["recipient_id"]):
+        raise HTTPException(404, "Inquiry not found")
+    replies = await db.rest("GET", "marketplace_inquiry_replies", user.token, params={"inquiry_id": f"eq.{inquiry_id}", "select": "id,sender_id,recipient_id,message,created_at", "order": "created_at.asc", "limit": "500"})
+    ids = {inquiry["sender_id"], inquiry["recipient_id"], *(r["sender_id"] for r in replies or [])}
+    names = {}
+    if ids:
+        profiles = await db.rest("GET", "public_profiles", user.token, params={"id": f"in.({','.join(sorted(ids))})", "select": "id,full_name"})
+        names = {p["id"]: p.get("full_name") for p in profiles or []}
+    return {
+        "id": inquiry["id"], "listing_id": inquiry["listing_id"], "listing_title": (inquiry.get("listing") or {}).get("title") or "Listing no longer available",
+        "sender_id": inquiry["sender_id"], "recipient_id": inquiry["recipient_id"], "sender_name": names.get(inquiry["sender_id"]),
+        "recipient_name": names.get(inquiry["recipient_id"]), "message": inquiry["message"], "reply_contact": inquiry.get("reply_contact"),
+        "status": inquiry["status"], "created_at": inquiry["created_at"],
+        "replies": [{**r, "sender_name": names.get(r["sender_id"]), "is_mine": r["sender_id"] == user.id} for r in replies or []],
+    }
+
+
+@router.get("/inquiries/{inquiry_id}/thread")
+async def get_inquiry_thread(inquiry_id: UUID, user: CurrentUser = Depends(get_current_user)):
+    return await _inquiry_thread(inquiry_id, user)
+
+
+@router.post("/inquiries/{inquiry_id}/replies", status_code=201)
+async def reply_to_inquiry(inquiry_id: UUID, body: InquiryReplyIn, user: CurrentUser = Depends(get_current_user)):
+    thread = await _inquiry_thread(inquiry_id, user)
+    recipient_id = thread["recipient_id"] if thread["sender_id"] == user.id else thread["sender_id"]
+    await db.rest("POST", "marketplace_inquiry_replies", user.token, json={
+        "inquiry_id": str(inquiry_id), "sender_id": user.id, "recipient_id": recipient_id, "message": body.message.strip(),
+    })
+    return await _inquiry_thread(inquiry_id, user)
 
 
 @router.post("/inquiries/{inquiry_id}/read", status_code=204)

@@ -1,5 +1,6 @@
 """ONNX model interface. Loads a CPU model from MODEL_PATH on first use. Never fabricates a prediction:
 if the model or its libraries are missing, ModelUnavailable is raised and the API reports it."""
+from __future__ import annotations
 import json
 import logging
 import re
@@ -56,6 +57,41 @@ def build_result(preds: list[Prediction], min_confidence: float) -> dict:
         "recycling_guidance": detail,
         "alternatives": [{"label": p.label[:60], "category": map_label(p.label), "confidence": round(p.confidence, 4)} for p in preds[:3]],
     }
+
+
+def classify_image_regions(clf: OnnxClassifier, data: bytes, min_confidence: float, whole_image_preds: list[Prediction]) -> list[dict]:
+    """Classify the whole image and four quadrants as user-reviewable region suggestions.
+
+    This classifier has no object-detection head or bounding boxes. The quadrants are
+    therefore scan regions rather than claims that an individual object was detected.
+    """
+    with Image.open(BytesIO(data)) as source:
+        image = source.convert("RGB")
+    w, h = image.size
+    regions = [("Whole image", (0, 0, w, h), [0.0, 0.0, 1.0, 1.0], whole_image_preds)]
+    if w >= 2 and h >= 2:
+        mx, my = w // 2, h // 2
+        regions.extend([
+            ("Top left", (0, 0, mx, my), [0.0, 0.0, 0.5, 0.5], None),
+            ("Top right", (mx, 0, w, my), [0.5, 0.0, 0.5, 0.5], None),
+            ("Bottom left", (0, my, mx, h), [0.0, 0.5, 0.5, 0.5], None),
+            ("Bottom right", (mx, my, w, h), [0.5, 0.5, 0.5, 0.5], None),
+        ])
+    candidates = []
+    for index, (label, box, normalized, predictions) in enumerate(regions):
+        if predictions is None:
+            crop = image.crop(box)
+            encoded = BytesIO()
+            crop.save(encoded, format="JPEG", quality=90)
+            predictions = clf.predict(encoded.getvalue())
+        result = build_result(predictions, min_confidence)
+        candidates.append({
+            "candidate_id": f"region-{index}", "region_label": label, "bbox": normalized,
+            "category": result["category"], "confidence": result["confidence"],
+            "is_uncertain": result["is_uncertain"], "top_guess": result["top_guess"],
+            "suggested_action": result["suggested_action"],
+        })
+    return candidates
 
 
 class OnnxClassifier:

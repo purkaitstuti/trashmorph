@@ -7,6 +7,17 @@ class Alternative(BaseModel):
     confidence: float
 
 
+class ScanCandidate(BaseModel):
+    candidate_id: str
+    region_label: str
+    bbox: list[float]
+    category: str
+    confidence: float
+    is_uncertain: bool
+    top_guess: str
+    suggested_action: str
+
+
 class ClassifyResult(BaseModel):
     scan_id: str
     category: str
@@ -16,6 +27,7 @@ class ClassifyResult(BaseModel):
     suggested_action: str
     recycling_guidance: str
     alternatives: list[Alternative]
+    candidates: list[ScanCandidate]
     model_version: str
     image_saved: bool
     disclaimer: str
